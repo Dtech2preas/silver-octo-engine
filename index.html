@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D-TECH API-Fier Dashboard</title>
+    <style>
+        body {
+            background-color: #120a2e; /* Dark Purple */
+            color: #e0e0e0;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #bfa1ff;
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #5a3e85;
+            padding-bottom: 10px;
+        }
+
+        #logs-container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            border: 1px solid #5a3e85;
+            border-radius: 8px;
+            background-color: #1a103c;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #2d1b5e;
+        }
+
+        th {
+            background-color: #2d1b5e;
+            color: #bfa1ff;
+            font-weight: bold;
+        }
+
+        tr:hover {
+            background-color: #26174a;
+        }
+
+        .type-HTTP {
+            color: #4caf50; /* Green */
+        }
+
+        .type-HTTPS-INIT {
+            color: #ff9800; /* Orange */
+        }
+
+        .type-HTTPS-DECRYPTED {
+            color: #2196f3; /* Blue */
+        }
+
+        .method {
+            font-weight: bold;
+        }
+
+        .url {
+            word-break: break-all;
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 20px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>D-TECH API-Fier Logs</h1>
+
+    <div style="text-align: center; margin: 20px 0;">
+      <a href="/cert" style="color: #00ff00; border: 1px solid #00ff00; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; background: rgba(0, 255, 0, 0.1);">
+        [ DOWNLOAD ROOT CA ]
+      </a>
+    </div>
+
+    <div id="logs-container">
+        <table id="logs-table">
+            <thead>
+                <tr>
+                    <th style="width: 150px;">Timestamp</th>
+                    <th style="width: 100px;">Type</th>
+                    <th style="width: 80px;">Method</th>
+                    <th>URL</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Logs will appear here -->
+            </tbody>
+        </table>
+        <div id="empty-state" class="empty-message">Waiting for traffic...</div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io({
+            transports: ['polling'],
+            upgrade: false
+        });
+        const tableBody = document.querySelector('#logs-table tbody');
+        const emptyState = document.getElementById('empty-state');
+
+        socket.on('connect', () => {
+            console.log('Connected via ' + socket.io.engine.transport.name);
+        });
+
+        socket.on('log', (data) => {
+            if (emptyState.style.display !== 'none') {
+                emptyState.style.display = 'none';
+            }
+
+            const row = document.createElement('tr');
+
+            // Timestamp
+            const timeCell = document.createElement('td');
+            timeCell.textContent = new Date(data.timestamp).toLocaleTimeString();
+            row.appendChild(timeCell);
+
+            // Type
+            const typeCell = document.createElement('td');
+            typeCell.textContent = data.type;
+            typeCell.className = `type-${data.type}`;
+            row.appendChild(typeCell);
+
+            // Method
+            const methodCell = document.createElement('td');
+            methodCell.textContent = data.method;
+            methodCell.className = 'method';
+            row.appendChild(methodCell);
+
+            // URL
+            const urlCell = document.createElement('td');
+            urlCell.textContent = data.url;
+            urlCell.className = 'url';
+            row.appendChild(urlCell);
+
+            // Prepend to show newest first
+            tableBody.insertBefore(row, tableBody.firstChild);
+        });
+    </script>
+</body>
+</html>
